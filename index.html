@@ -58,13 +58,13 @@
       <p id="status" role="status">Open a batch to see its evidence, sign-offs and release list.</p>
       <a id="transaction" hidden>Track transaction ↗</a>
       <section id="batch-panel" hidden>
-        <p id="reviewer-line" class="note"></p>
+        <p id="reviewer-line" class="note"></p><p id="identity" class="note"></p><p class="eyebrow">CURRENT BATCH · FINALIZED CHAIN DATA</p>
         <dl id="totals" class="totals"></dl>
         <div class="actions"><button id="recheck">Recheck museum data</button><button id="issue" class="primary">Issue release list</button></div>
-        <ol id="records" class="records"></ol>
+        <h3 class="section-title">Artwork evidence and review</h3><p id="timeline" class="note"></p><ol id="records" class="records"></ol>
         <div id="release-panel" class="release" hidden>
           <h3 id="release-title">Release list</h3><p id="release-summary"></p>
-          <button id="download">Download handoff list</button>
+          <ol id="release-items"></ol><a id="release-proof" hidden>Publication transaction ↗</a><p id="release-reviewer" class="note"></p><button id="download">Download handoff list</button>
         </div>
       </section>
       <p class="note">Release lists record the museum’s published fields and the reviewer’s sign-off. Check the institution’s current guidance before reuse.</p>

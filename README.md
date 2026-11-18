@@ -37,3 +37,9 @@ python -m unittest discover -s tests
 ```
 
 [deployment.json](deployment.json) pins the address and deployment transaction. `npm run deploy` deploys the source using a fresh key on zero-gas Stable Studionet. `node scripts/check-batch.mjs` submits an acceptance run with independent temporary testnet wallets. The Python tests simulate a source change to check re-review and historical release preservation.
+
+### Dashboard and evidence links
+
+Dashboard totals cover the currently loaded batch and its published revisions. The deployed contract reads batches by editor wallet and key, so the desk does not calculate global totals. Artist names are optional, current museum metadata and do not participate in the historical evidence or review eligibility. Official open-image URLs render as thumbnails with a placeholder fallback.
+
+Evidence and release transaction links are provided for the published example and for transactions finalized in the current page session. The contract does not index transaction hashes by historical snapshot.

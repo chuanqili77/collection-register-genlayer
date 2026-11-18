@@ -94,6 +94,51 @@ async function run(action) {
 const labels = {restricted:'Museum marks restricted', unavailable:'No CC0 image URL', missing:'Museum record missing'}
 const param = new URLSearchParams(location.search)
 let displayedRelease
+const receipts = new Map()
+const museumMetadata = new Map()
+
+function showIdentity(accounts = []) {
+  const account = accounts[0]?.toLowerCase()
+  const role = account === active?.key[0] ? 'editor' : account === active?.batch.reviewer ? 'reviewer' : 'visitor'
+  byId('identity').textContent = account ? 'Wallet · ' + account + ' · ' + role : 'Wallet · disconnected'
+}
+
+window.ethereum?.on?.('accountsChanged', showIdentity)
+
+function officialThumbnail(row) {
+  const tile = line('div', 'No open image', 'art-thumb')
+  if (row.state === 'public_domain' && row.image?.startsWith('https://openaccess-cdn.clevelandart.org/')) {
+    const img = document.createElement('img')
+    img.alt = row.title ?? 'Museum artwork'
+    img.loading = 'lazy'
+    img.addEventListener('error', () => img.remove(), {once:true})
+    img.src = row.image
+    tile.append(img)
+  }
+  return tile
+}
+
+function describeArtist(row, target) {
+  if (!row.accession) return
+  if (!museumMetadata.has(row.id)) {
+    const metadata = fetch('https://openaccess-api.clevelandart.org/api/artworks/' + row.id)
+      .then(response => response.ok ? response.json() : null)
+      .then(result => result?.data?.creators?.map(item => item.description).filter(Boolean).join(', '))
+      .catch(() => null)
+    museumMetadata.set(row.id, metadata)
+  }
+  museumMetadata.get(row.id).then(artist => {
+    if (artist) target.textContent = artist + ' · current museum metadata'
+  })
+}
+
+function proofFor(kind, key, revision) {
+  if (key[0] === demo.owner && key[1] === demo.slug && revision === demo.revision) {
+    return demo.transactions[kind]
+  }
+  return receipts.get([...key, revision, kind].join('/'))
+}
+
 
 function batchLink(key) {
   return './?' + new URLSearchParams({owner:key[0], batch:key[1]}) + '#register'
@@ -107,9 +152,9 @@ function rowStatus(entry, batch) {
 function totals(rows, batch) {
   const counts = {signed:0, pending:0, blocked:0}
   for (const entry of rows) counts[rowStatus(entry, batch)]++
-  byId('totals').replaceChildren(...Object.entries(counts).map(([state, count]) => {
+  byId('totals').replaceChildren(...Object.entries({collections:1, assets:rows.length, ...counts, releases:batch.release_revisions.length}).map(([state, count]) => {
     const metric = document.createElement('div')
-    metric.append(line('dt', {signed:'Signed off',pending:'Awaiting review',blocked:'Excluded'}[state]), line('dd', count))
+    metric.append(line('dt', {collections:'Loaded collection',assets:'Artwork assets',signed:'Approved assets',pending:'Pending reviews',blocked:'Restricted / unavailable',releases:'Published releases'}[state]), line('dd', count))
     return metric
   }))
   return counts
@@ -124,11 +169,28 @@ async function renderRevision(revision) {
   ])
   displayedRelease = batch.release_revisions.includes(revision) ?
     await read(address, 'get_release', [...key, revision]) : null
-  const counts = totals(rows, batch)
+  const counts = totals(batch.rows, batch)
+  const evidenceHash = proofFor('opened', key, revision)
+  const timeline = byId('timeline')
+  timeline.textContent = 'Evidence snapshot ' + revision + (current ? ' · latest finalized' : ' · historical')
+  if (evidenceHash) {
+    const link = line('a', ' · Evidence transaction ↗')
+    link.href = explorer + '/transactions/' + evidenceHash
+    timeline.append(link)
+  }
   byId('recheck').hidden = !current
   byId('issue').hidden = !current || Boolean(displayedRelease) || !counts.signed || Boolean(counts.pending)
   byId('release-panel').hidden = !displayedRelease
   if (displayedRelease) {
+    byId('release-items').replaceChildren(
+      ...displayedRelease.included.map(row => line('li', 'Included · ' + row.title + ' · evidence v' + row.evidence_version)),
+      ...displayedRelease.excluded.map(row => line('li', 'Excluded · ' + (row.title ?? row.id) + ' · ' + labels[row.state])),
+    )
+    byId('release-reviewer').textContent = 'Reviewer · ' + displayedRelease.reviewer
+    const releaseProof = proofFor('issued', key, revision)
+    const releaseLink = byId('release-proof')
+    releaseLink.hidden = !releaseProof
+    if (releaseProof) releaseLink.href = explorer + '/transactions/' + releaseProof
     byId('release-title').textContent = current ? 'Issued release list' : 'Historical release list'
     byId('release-summary').textContent = displayedRelease.included.length + ' approved image(s) included · ' +
       displayedRelease.excluded.length + ' image(s) excluded · evidence revision ' + revision
@@ -146,9 +208,13 @@ async function renderRevision(revision) {
       asset.href = row.image
       details.append(asset)
     }
+    if (row.accession) details.append(line('p', 'Accession ' + row.accession))
+    const artist = line('p', '')
+    details.append(artist)
+    describeArtist(row, artist)
     const older = previous?.find(item => item.evidence.id === row.id)
-    if (older && older.version !== version) {
-      const fields = {license:'Share license', image:'Image URL', state:'Availability', accession:'Accession'}
+    if (older) {
+      const fields = {license:'Share license', image:'Image URL', state:'Availability', accession:'Accession', title:'Title (descriptive)'}
       for (const [name, label] of Object.entries(fields)) {
         if (older.evidence[name] !== row[name]) {
           details.append(line('p', label + ': ' + (older.evidence[name] ?? '—') + ' → ' + (row[name] ?? '—')))
@@ -168,7 +234,7 @@ async function renderRevision(revision) {
       review.append(approve)
     }
     const item = document.createElement('li')
-    item.append(details, review)
+    item.append(officialThumbnail(row), details, review)
     return item
   }))
 }
@@ -194,6 +260,8 @@ async function load(key) {
   for (let revision = batch.revision; revision >= 1; revision--) {
     select.add(new Option('Revision ' + revision, String(revision)))
   }
+  const accounts = await window.ethereum?.request({method:'eth_accounts'}).catch(() => [])
+  showIdentity(accounts)
   await renderRevision(batch.revision)
   byId('batch-panel').hidden = false
   status('Showing finalized evidence revision ' + batch.revision + '.')
@@ -212,6 +280,16 @@ async function write(method, args, key, required, result, signer) {
   link.hidden = false
   status('Submitted · awaiting consensus.')
   await waitForFinality(hash, stage => status('Consensus · ' + stage))
+  const updated = await read(address, 'get_batch', key)
+  const previousRevision = active?.key.join('/') === key.join('/') ? active.batch.revision : null
+  if (updated) {
+    if (updated.revision !== previousRevision && method !== 'approve_image') {
+      receipts.set([...key, updated.revision, 'opened'].join('/'), hash)
+    }
+    if (method === 'issue_release' && updated.release_revisions.includes(args[1])) {
+      receipts.set([...key, args[1], 'issued'].join('/'), hash)
+    }
+  }
   await load(key)
   if (!active) throw Error('The transaction finalized, but the batch readback is unavailable.')
   status(result(active.batch))

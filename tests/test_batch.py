@@ -22,6 +22,7 @@ class BatchTest(unittest.TestCase):
     def setUp(self):
         self.editor = "0x" + "1" * 40
         self.reviewer = "0x" + "2" * 40
+        self.http_status = 200
         self.message = SimpleNamespace(sender_address=self.editor)
         self.museum = {
             str(artwork_id): {
@@ -52,7 +53,7 @@ class BatchTest(unittest.TestCase):
 
     def fetch(self, url):
         item = self.museum[url.rsplit("/", 1)[1]]
-        return SimpleNamespace(status=200, body=json.dumps({"data": item}))
+        return SimpleNamespace(status=self.http_status, body=json.dumps({"data": item}))
 
     def read_batch(self):
         return json.loads(self.contract.get_batch(self.editor, "sample"))
@@ -93,6 +94,48 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(self.contract.get_release(self.editor, "sample", 1), "")
         with self.assertRaisesRegex(UserError, "NO_ELIGIBLE_IMAGES"):
             self.contract.issue_release("sample", 2)
+
+    def test_roles_and_restrictions(self):
+        self.museum["2"]["share_license_status"] = "Copyrighted"
+        with self.assertRaisesRegex(UserError, "DISTINCT_REVIEWER_REQUIRED"):
+            self.contract.open_batch("sample", "Sample issue", self.editor, "1,2")
+        self.contract.open_batch("sample", "Sample issue", self.reviewer, "1,2")
+        self.assertEqual(self.read_batch()["reviewer"], self.reviewer)
+        self.assertEqual(self.read_batch()["ids"], [1, 2])
+        with self.assertRaisesRegex(UserError, "REVIEWER_REQUIRED"):
+            self.contract.approve_image(self.editor, "sample", 1, 1)
+        self.message.sender_address = self.reviewer
+        with self.assertRaisesRegex(UserError, "IMAGE_NOT_ELIGIBLE"):
+            self.contract.approve_image(self.editor, "sample", 2, 1)
+        with self.assertRaisesRegex(UserError, "STALE_IMAGE_EVIDENCE"):
+            self.contract.approve_image(self.editor, "sample", 1, 0)
+
+    def test_description_refresh_carries_approval_and_rejects_duplicate_release(self):
+        self.contract.open_batch("sample", "Sample issue", self.reviewer, "1")
+        self.approve(1, 1)
+        self.museum["1"]["title"] = "Updated transcription"
+        self.contract.recheck_batch("sample", 1)
+        self.assertEqual(self.read_batch()["revision"], 2)
+        self.assertEqual(self.read_batch()["rows"][0]["version"], 1)
+        self.contract.issue_release("sample", 2)
+        with self.assertRaisesRegex(UserError, "RELEASE_ALREADY_ISSUED"):
+            self.contract.issue_release("sample", 2)
+
+    def test_api_error_prevents_opening(self):
+        self.http_status = 503
+        with self.assertRaisesRegex(UserError, "MUSEUM_API_UNAVAILABLE"):
+            self.contract.open_batch("sample", "Sample issue", self.reviewer, "1")
+        self.assertEqual(self.contract.get_batch(self.editor, "sample"), "")
+
+    def test_invalid_and_incomplete_catalog_responses_do_not_create_a_batch(self):
+        self.museum["1"]["accession_number"] = "invalid/path"
+        with self.assertRaisesRegex(UserError, "INVALID_MUSEUM_RECORD"):
+            self.contract.open_batch("sample", "Sample issue", self.reviewer, "1")
+        self.museum["1"]["accession_number"] = "A.1"
+        del self.museum["1"]["title"]
+        with self.assertRaises(KeyError):
+            self.contract.open_batch("sample", "Sample issue", self.reviewer, "1")
+        self.assertEqual(self.contract.get_batch(self.editor, "sample"), "")
 
 
 if __name__ == "__main__":

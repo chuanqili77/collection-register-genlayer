@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
-import {reader, read} from '../chain.js'
+import {reader, read, waitForFinality} from '../chain.js'
 
 async function load(path) {
   return readFile(new URL(path, import.meta.url), 'utf8')
@@ -15,6 +15,8 @@ const {address} = deployment
 assert.equal(address, sample.address)
 assert.equal(Number(await reader.getChainId()), 61999)
 assert.equal(await reader.getContractCode(address), source)
+const provision = await waitForFinality(deployment.hash)
+assert.equal(provision.data.contract_address.toLowerCase(), address.toLowerCase())
 const key = [sample.owner, sample.slug]
 const [batch, release] = await Promise.all([
   read(address, 'get_batch', key),

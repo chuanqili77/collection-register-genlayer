@@ -281,9 +281,8 @@ async function write(method, args, key, required, result, signer) {
   status('Submitted · awaiting consensus.')
   await waitForFinality(hash, stage => status('Consensus · ' + stage))
   const updated = await read(address, 'get_batch', key)
-  const previousRevision = active?.key.join('/') === key.join('/') ? active.batch.revision : null
   if (updated) {
-    if (updated.revision !== previousRevision && method !== 'approve_image') {
+    if (method === 'open_batch' && updated.revision === 1) {
       receipts.set([...key, updated.revision, 'opened'].join('/'), hash)
     }
     if (method === 'issue_release' && updated.release_revisions.includes(args[1])) {

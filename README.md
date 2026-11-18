@@ -42,4 +42,4 @@ python -m unittest discover -s tests
 
 Dashboard totals cover the currently loaded batch and its published revisions. The deployed contract reads batches by editor wallet and key, so the desk does not calculate global totals. Artist names are optional, current museum metadata and do not participate in the historical evidence or review eligibility. Official open-image URLs render as thumbnails with a placeholder fallback.
 
-Evidence and release transaction links are provided for the published example and for transactions finalized in the current page session. The contract does not index transaction hashes by historical snapshot.
+Evidence and release transaction links are provided for the published example and for batch openings and releases finalized in the current page session. Rechecks link directly to their own receipt in the transaction status area. The contract does not index transaction hashes by historical snapshot.

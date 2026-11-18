@@ -4,7 +4,7 @@ Collection Register is a GenLayer application for curators and publishers who ne
 
 ## Use the register
 
-Open the [website](https://chuanqili77.github.io/collection-register-genlayer/). Enter a publisher wallet and a register name to browse finalized editions. To publish from your own wallet, enter a new register name and one to four museum artwork IDs, then choose **Publish or recheck**. Stable Studionet requires an EIP-1193 wallet for writes. The website links to the transaction and updates the register after successful finality.
+Open the [website](https://chuanqili77.github.io/collection-register-genlayer/) or view the [example register](https://chuanqili77.github.io/collection-register-genlayer/?owner=0x34550a073bb4258d458e014718983531d801646c&register=open-gallery#register). Enter a publisher wallet and a register name to browse finalized editions. To publish from your own wallet, enter a new register name and one to four museum artwork IDs, then choose **Publish or recheck**. Stable Studionet requires an EIP-1193 wallet for writes. The website links to the transaction and updates the register after successful finality.
 
 Recheck the same IDs using the same wallet and register name. A changed response adds a new edition. An unchanged response finalizes without creating another edition. The list of artwork IDs is fixed when the first edition is finalized.
 
@@ -24,4 +24,4 @@ npm run dev
 npm run build -- --base=./
 ```
 
-The frontend uses [the deployed Stable Studionet contract](https://explorer-studio.genlayer.com/address/0xD9D9E9038E1FfB24Fa689382b0b3077c0492afDa). The address and deployment hash are in [deployment.json](deployment.json). Run `npm run deploy` to deploy the contract using a fresh key on zero-gas Studionet, or pass an existing deployment transaction hash to verify and record its deployment. Run `node scripts/check.mjs` to exercise publication and unchanged recheck against the configured deployment.
+The frontend uses [the deployed Stable Studionet contract](https://explorer-studio.genlayer.com/address/0xA738699e8AA23D122854fe3eeCCfA57e051f5257). The address and deployment hash are in [deployment.json](deployment.json). Run `npm run deploy` to deploy the contract using a fresh key on zero-gas Studionet, or pass an existing deployment transaction hash to verify and record its deployment. Run `node scripts/check.mjs` to exercise publication and unchanged recheck against the configured deployment.

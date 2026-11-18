@@ -10,11 +10,11 @@ IMAGE_PREFIX = "https://openaccess-cdn.clevelandart.org/"
 def observations(ids):
     rows = []
     for artwork_id in ids:
-        response = gl.nondet.web.request(API + str(artwork_id), method="GET")
-        if response.status_code == 404:
+        response = gl.nondet.web.get(API + str(artwork_id))
+        if response.status == 404:
             rows.append({"id": artwork_id, "state": "missing"})
             continue
-        if response.status_code != 200:
+        if response.status != 200:
             raise gl.vm.UserError("MUSEUM_API_UNAVAILABLE")
         item = json.loads(response.body)["data"]
         license_status = item["share_license_status"]

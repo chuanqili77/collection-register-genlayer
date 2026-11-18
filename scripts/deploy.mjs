@@ -14,6 +14,6 @@ const receipt = await waitForFinality(hash, status => console.log(status))
 const address = receipt.data.contract_address
 assert.match(address, /^0x[0-9a-f]{40}$/i)
 assert.equal(await reader.getContractCode(address), code)
-assert.equal(await read(address, 'get_manifest', [account.address, 'open-gallery']), null)
+assert.equal(await read(address, 'get_batch', [account.address, 'open-gallery']), null)
 await writeFile(new URL('../deployment.json', import.meta.url), JSON.stringify({address, hash}, null, 2) + '\n')
 console.log('Finalized deployment', address)

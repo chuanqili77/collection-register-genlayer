@@ -1,0 +1,15 @@
+{
+  "owner": "0x666b7e6ddbcdf692fc3821341e26ff3759dea7e3",
+  "slug": "illustrated-issue",
+  "address": "0xE9E887287f355e740d5213b327389f167FcC1C78",
+  "revision": 1,
+  "transactions": {
+    "opened": "0xab8d61fdd92cde4a526264d589eb2ff07ae59460e4554ecf3bba8d03c4a65f4c",
+    "unsigned_release_rejected": "0x213838299d2ea195bb651c9271be3a41f5509b127750bfe3d0dc5ec6cb47c3e5",
+    "restricted_image_rejected": "0x3ce3267f4641271dc0918e8d7c9b9543c7eb194cf4acd503d8570cbe048e0333",
+    "editor_signoff_rejected": "0x8826e8bf1adbe7c8bb7747b41232ad26e9ed32d15cfa16d98d55db29dc14d73a",
+    "stale_evidence_rejected": "0x4ad939ad9512260b20b5657a2a1bcc401edc819e1a8a8b01e32b8118fb7cf871",
+    "approved": "0x080d106a6479cf9523b4e572b8b1a45e71f24eda34f73210bec8b6ac35ee7114",
+    "issued": "0x96234f6a19d0d29b6a7fd6450f266052822241bc8681e65e592ed4e1fd5c3357"
+  }
+}

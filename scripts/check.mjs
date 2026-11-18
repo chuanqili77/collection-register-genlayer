@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises'
 import {createAccount, createClient} from 'genlayer-js'
 import {chain, read, waitForFinality} from '../chain.js'
 
-const {address} = JSON.parse(await readFile(new URL('../deployment.json', import.meta.url)))
+const {address} = JSON.parse(await readFile(new URL('../archive-deployment.json', import.meta.url)))
 const account = createAccount()
 const client = createClient({chain, account})
 assert.equal(Number(await client.getChainId()), 61999)

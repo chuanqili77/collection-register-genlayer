@@ -20,7 +20,8 @@ export async function waitForFinality(hash, onStatus = () => {}) {
         const receipts = [tx.consensus_data?.leader_receipt].flat()
         const leader = receipts.find(item => item?.mode === 'leader') ?? receipts[0]
         if (![6, 'MAJORITY_AGREE'].includes(tx.result) || leader?.execution_result !== 'SUCCESS') {
-          throw Error('Finalized without successful execution.')
+          const reason = leader?.result?.status === 'rollback' ? leader.result.payload : ''
+          throw Error('Finalized without successful execution.' + (reason ? ' ' + reason : ''))
         }
         return tx
       }

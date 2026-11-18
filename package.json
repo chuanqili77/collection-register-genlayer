@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "python -m unittest discover -s tests -v",
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
